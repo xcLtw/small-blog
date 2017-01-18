@@ -6,9 +6,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess hehe'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-    FLASK_MAIL_SUBJECT_PREFIX = '[FLASK-Xc]'
-    FLASK_MAIL_SENDER = 'Flask Admin <xcltw1993@gmail.com>'
-    FLASK_ADMIN = os.environ.get('FLASK_ADMIN')
+    FLASKY_MAIL_SUBJECT_PREFIX = '[FLASK-Xc]'
+    FLASKY_MAIL_SENDER = os.environ.get('MAIL_USERNAME_DEVELOP')
+    FLASKY_ADMIN = os.environ.get('FLASK_ADMIN_DEVELOP')
 
     @staticmethod
     def init_app(app):
@@ -17,11 +17,11 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    MAIL_SERVER = 'smtp.office365.com'
+    MAIL_SERVER = 'smtp.qq.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME_DEVELOP')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD_DEVELOP')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URI') or \
                               'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
