@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app.auth import auth
 from app.models import User
 from app import db
-from app.auth.forms import LoginForm, RegistrationForm
+from app.auth.forms import LoginForm, RegistrationForm, PasswordResetForm, PasswordResetRequestForm
 from app.email import send_email
 
 
@@ -14,12 +14,12 @@ def before_request():
             and not current_user.confirmed \
             and request.endpoint[:5] != 'auth.' \
             and request.endpoint != 'static':
-        return redirect(url_for('auth/unconfirmed.html'))
+        return redirect(url_for('auth.unconfirmed'))
 
 
 @auth.route('/unconfirmed')
 def unconfirmed():
-    if current_user.is_anonyomous or current_user.confirmed:
+    if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
 
@@ -75,7 +75,7 @@ def confirm(token):
     return redirect(url_for('main.index'))
 
 
-@auth.route('confirm')
+@auth.route('/confirm')
 @login_required
 def resend_confirmation():
     token = current_user.generate_confirmation_token()
@@ -83,3 +83,30 @@ def resend_confirmation():
                'auth/email/confirm', user=current_user, token=token)
     flash('A new confirmation email has been sent to your e-address,remember check your RUBBISH.')
     return redirect(url_for('main.index'))
+
+
+@auth.route('/reset', methods=['GET', 'POST'])
+def password_reset_request():
+    # 找回密码，对已登录用户不可用
+    if not current_user.is_anymous:
+        return redirect(url_for('main.index'))
+    form = PasswordResetRequestForm
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first
+        if user is not None:
+            token = user.generate_reset_token()
+            send_email()
+        return redirect(url_for('auth.login'))
+    return render_template('auth/reset_password.html', form=form)
+
+
+@auth.route('/reset/<token>', methods=['GET', 'POST'])
+def password_reset(token):
+    if not current_user.is_anymous:
+        return redirect(url_for('main.index'))
+    form = PasswordResetForm
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None:
+            return redirect(url_for('main.index'))
+        

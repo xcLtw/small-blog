@@ -11,7 +11,8 @@ migrate = Migrate(app, db)
 
 
 def make_shell_content():
-    return dict(app=app, db=db, User=User, Role=Role)
+    users = User.query.all()
+    return dict(app=app, db=db, User=User, Role=Role, users=users)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_content))
@@ -24,9 +25,6 @@ def test():
     import unittest
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
-
-
-
 
 
 if __name__ == '__main__':
