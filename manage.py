@@ -27,5 +27,10 @@ def test():
     unittest.TextTestRunner(verbosity=2).run(tests)
 
 
+@manager.command
+def test_ot():
+    pass
+
+
 if __name__ == '__main__':
     manager.run()

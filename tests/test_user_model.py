@@ -1,7 +1,8 @@
 # coding=utf-8
 import unittest
+import time
 from app import create_app, db
-from app.models import User
+from app.models import User, AnonymousUser, Role, Permission
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -10,6 +11,7 @@ class UserModelTestCase(unittest.TestCase):
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
+        Role.insert_roles()
 
     def tearDown(self):
         db.session.remove()
@@ -34,3 +36,44 @@ class UserModelTestCase(unittest.TestCase):
         u = User(password='dog')
         u2 = User(password='dog')
         self.assertTrue(u.password_hash != u2.password_hash)
+
+    def test_valid_confirmation_token(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_confirmation_token()
+        self.assertTrue(u.confirm(token))
+
+    def test_invalid_confirmation_token(self):
+        u1 = User(password='cat')
+        u2 = User(password='cat')
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.commit()
+        token = u1.generate_confirmation_token()
+        self.assertFalse(u2.confirm(token))
+
+    def test_expired_confirmation_token(self):
+        u = User(username='bob')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_confirmation_token(1)
+        time.sleep(2)
+        self.assertFalse(u.confirm(token))
+
+    def test_valid_reset_token(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_reset_token()
+        self.assertTrue(u.reset_password(token, 'hard'))
+        self.assertTrue(u.verify_password('hard'))
+
+    def test_roles_and_permission(self):
+        u = User(email='bob@163.com', password='cat')
+        self.assertTrue(u.can(Permission.WRITE_ARTICLES))
+        self.assertFalse(u.can(Permission.MODERATE_COMMENTS))
+
+    def test_anonymous_user(self):
+        u = AnonymousUser()
+        self.assertFalse(u.can())
